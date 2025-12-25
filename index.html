@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reaction Time Test – How Fast Are You?</title>
+  <meta name="description" content="Test your reaction speed in milliseconds. How fast is your brain?" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      height: 100vh;
+      background: #8b0000;
+      color: white;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      transition: background 0.15s ease;
+      user-select: none;
+    }
+    #game { padding: 24px; width: 100%; }
+    h1 { font-size: 2rem; margin-bottom: 12px; }
+    #sub { opacity: 0.9; white-space: pre-line; }
+    #ad {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #111;
+      padding: 10px;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div id="game">
+    <h1 id="text">Tap when the screen turns GREEN</h1>
+    <div id="sub"></div>
+  </div>
+
+  <div id="ad">Ad Space</div>
+
+  <script>
+    let state = "idle";
+    let startTime, timer;
+    let attempts = [];
+
+    document.body.addEventListener("click", () => {
+      if (state === "idle") {
+        state = "waiting";
+        document.body.style.background = "#8b0000";
+        text.innerText = "Wait for green...";
+        sub.innerText = "";
+        timer = setTimeout(() => {
+          state = "go";
+          startTime = performance.now();
+          document.body.style.background = "green";
+          text.innerText = "TAP!";
+        }, Math.random() * 3000 + 1000);
+      } else if (state === "waiting") {
+        clearTimeout(timer);
+        state = "idle";
+        text.innerText = "Too soon! Tap to try again.";
+      } else if (state === "go") {
+        const time = Math.round(performance.now() - startTime);
+        attempts.push(time);
+        state = "idle";
+        document.body.style.background = "#222";
+        text.innerText = `Your time: ${time} ms`;
+        if (attempts.length >= 3) {
+          const best = Math.min(...attempts);
+          sub.innerText = `Best: ${best} ms\nMost people replay 5–7 times to improve`;
+          attempts = [];
+        }
+      }
+    });
+  </script>
+</body>
+</html>
