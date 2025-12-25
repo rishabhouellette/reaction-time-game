@@ -4,9 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Reaction Time Test – How Fast Are You?</title>
-  <meta name="description" content="Test your reaction speed in milliseconds. How fast is your brain?" />
+  <meta name="description" content="Test your reaction speed in milliseconds. Can you beat your best time?" />
+
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
       height: 100vh;
       background: #8b0000;
@@ -19,9 +25,32 @@
       transition: background 0.15s ease;
       user-select: none;
     }
-    #game { padding: 24px; width: 100%; }
-    h1 { font-size: 2rem; margin-bottom: 12px; }
-    #sub { opacity: 0.9; white-space: pre-line; }
+
+    #game {
+      padding: 24px;
+      width: 100%;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 12px;
+    }
+
+    #sub {
+      opacity: 0.9;
+      white-space: pre-line;
+      margin-top: 8px;
+    }
+
+    button {
+      margin-top: 16px;
+      padding: 12px 18px;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+    }
+
     #ad {
       position: fixed;
       bottom: 0;
@@ -30,13 +59,19 @@
       background: #111;
       padding: 10px;
       font-size: 0.9rem;
+      opacity: 0.85;
     }
   </style>
 </head>
+
 <body>
   <div id="game">
     <h1 id="text">Tap when the screen turns GREEN</h1>
     <div id="sub"></div>
+
+    <button id="shareBtn" style="display:none;">
+      Share your score
+    </button>
   </div>
 
   <div id="ad">Ad Space</div>
@@ -45,6 +80,11 @@
     let state = "idle";
     let startTime, timer;
     let attempts = [];
+    let lastScore = null;
+
+    const text = document.getElementById("text");
+    const sub = document.getElementById("sub");
+    const shareBtn = document.getElementById("shareBtn");
 
     document.body.addEventListener("click", () => {
       if (state === "idle") {
@@ -52,27 +92,55 @@
         document.body.style.background = "#8b0000";
         text.innerText = "Wait for green...";
         sub.innerText = "";
+        shareBtn.style.display = "none";
+
         timer = setTimeout(() => {
           state = "go";
           startTime = performance.now();
           document.body.style.background = "green";
           text.innerText = "TAP!";
         }, Math.random() * 3000 + 1000);
+
       } else if (state === "waiting") {
         clearTimeout(timer);
         state = "idle";
         text.innerText = "Too soon! Tap to try again.";
+
       } else if (state === "go") {
         const time = Math.round(performance.now() - startTime);
+        lastScore = time;
         attempts.push(time);
+
         state = "idle";
         document.body.style.background = "#222";
         text.innerText = `Your time: ${time} ms`;
+
         if (attempts.length >= 3) {
           const best = Math.min(...attempts);
-          sub.innerText = `Best: ${best} ms\nMost people replay 5–7 times to improve`;
+          sub.innerText = `Best: ${best} ms\nCan you beat it?`;
           attempts = [];
+          shareBtn.style.display = "inline-block";
         }
+      }
+    });
+
+    shareBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+
+      const shareText =
+        `My reaction time is ${lastScore} ms. Can you beat me?`;
+
+      if (navigator.share) {
+        navigator.share({
+          title: "Reaction Time Test",
+          text: shareText,
+          url: window.location.href
+        });
+      } else {
+        navigator.clipboard.writeText(
+          shareText + " " + window.location.href
+        );
+        alert("Link copied to clipboard!");
       }
     });
   </script>
