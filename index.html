@@ -4,14 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Reaction Time Test – How Fast Are You?</title>
-  <meta name="description" content="Test your reaction speed in milliseconds. Can you beat your best time?" />
+
+  <meta name="description" content="Test your reaction speed in milliseconds. Play 3 times for accurate results and see your reaction grade." />
+
+  <!-- AdSense-safe metadata -->
+  <meta name="google-adsense-account" content="ca-pub-XXXXXXXXXXXXXXXX">
 
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       height: 100vh;
@@ -29,6 +29,7 @@
     #game {
       padding: 24px;
       width: 100%;
+      max-width: 500px;
     }
 
     h1 {
@@ -40,6 +41,7 @@
       opacity: 0.9;
       white-space: pre-line;
       margin-top: 8px;
+      font-size: 1rem;
     }
 
     button {
@@ -51,13 +53,17 @@
       cursor: pointer;
     }
 
-    #ad {
+    /* AdSense-safe container */
+    #ad-container {
       position: fixed;
       bottom: 0;
       left: 0;
       right: 0;
+      min-height: 60px;
       background: #111;
-      padding: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 0.9rem;
       opacity: 0.85;
     }
@@ -67,14 +73,21 @@
 <body>
   <div id="game">
     <h1 id="text">Tap when the screen turns GREEN</h1>
-    <div id="sub"></div>
+    <div id="sub">
+      For accurate results,<br>
+      play this test <strong>3 times</strong>.<br><br>
+      Tap anywhere to begin.
+    </div>
 
     <button id="shareBtn" style="display:none;">
       Share your score
     </button>
   </div>
 
-  <div id="ad">Ad Space</div>
+  <!-- AdSense-safe placeholder -->
+  <div id="ad-container">
+    Advertisement
+  </div>
 
   <script>
     let state = "idle";
@@ -85,6 +98,21 @@
     const text = document.getElementById("text");
     const sub = document.getElementById("sub");
     const shareBtn = document.getElementById("shareBtn");
+
+    function getPercentile(ms) {
+      if (ms < 180) return "faster than 95% of people";
+      if (ms < 220) return "faster than 85% of people";
+      if (ms < 260) return "faster than 65% of people";
+      if (ms < 300) return "faster than 40% of people";
+      return "slower than average";
+    }
+
+    function getGrade(ms) {
+      if (ms < 180) return "Elite ⚡";
+      if (ms < 220) return "Fast 🟢";
+      if (ms < 260) return "Average 🟡";
+      return "Needs Practice 🔴";
+    }
 
     document.body.addEventListener("click", () => {
       if (state === "idle") {
@@ -105,6 +133,7 @@
         clearTimeout(timer);
         state = "idle";
         text.innerText = "Too soon! Tap to try again.";
+        sub.innerText = "";
 
       } else if (state === "go") {
         const time = Math.round(performance.now() - startTime);
@@ -115,9 +144,17 @@
         document.body.style.background = "#222";
         text.innerText = `Your time: ${time} ms`;
 
-        if (attempts.length >= 3) {
+        if (attempts.length < 3) {
+          sub.innerText =
+            `Attempt ${attempts.length} of 3\nTap to continue`;
+        } else {
           const best = Math.min(...attempts);
-          sub.innerText = `Best: ${best} ms\nCan you beat it?`;
+          const percentile = getPercentile(best);
+          const grade = getGrade(best);
+
+          sub.innerText =
+            `Best reaction time: ${best} ms\nGrade: ${grade}\nYou are ${percentile}`;
+
           attempts = [];
           shareBtn.style.display = "inline-block";
         }
@@ -128,7 +165,7 @@
       e.stopPropagation();
 
       const shareText =
-        `My reaction time is ${lastScore} ms. Can you beat me?`;
+        `My reaction time is ${lastScore} ms (${getGrade(lastScore)}). Can you beat me?`;
 
       if (navigator.share) {
         navigator.share({
