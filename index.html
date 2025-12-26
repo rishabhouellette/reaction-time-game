@@ -3,8 +3,19 @@
 <head>
 <meta charset="UTF-8" />
 <title>Reaction Time Test – How Fast Are You?</title>
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="description" content="Test your reaction speed. Tap when the screen turns green. Play 3 rounds to get your accurate reaction time." />
+<meta name="robots" content="index, follow" />
+<meta name="theme-color" content="#0a8f08" />
+<link rel="canonical" href="https://reaction-time-game-rt.netlify.app/" />
+
+<!-- Open Graph -->
+<meta property="og:title" content="Reaction Time Test – How Fast Are You?" />
+<meta property="og:description" content="Tap when the screen turns green. Play 3 times to discover your real reaction speed." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://reaction-time-game-rt.netlify.app/" />
+<meta property="og:image" content="https://reaction-time-game-rt.netlify.app/cat-happy.png" />
 
 <style>
 html, body {
@@ -20,8 +31,8 @@ html, body {
 
 body.go { background: #0a8f08; }
 
-.container {
-  height: 100%;
+.wrapper {
+  min-height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -31,22 +42,14 @@ body.go { background: #0a8f08; }
 
 #character {
   width: 220px;
-  max-width: 60%;
-  margin-top: 20px;
+  max-width: 65%;
+  margin-top: 10px;
 }
 
-/* ===== CAT ANIMATIONS ===== */
-.idle {
-  animation: breathe 3s ease-in-out infinite;
-}
-
-.waiting {
-  animation: wiggle 0.6s ease-in-out infinite;
-}
-
-.react {
-  animation: pop 0.35s ease-out;
-}
+/* Animations */
+.idle { animation: breathe 3s ease-in-out infinite; }
+.waiting { animation: wiggle 0.6s ease-in-out infinite; }
+.react { animation: pop 0.35s ease-out; }
 
 @keyframes breathe {
   0%,100% { transform: scale(1); }
@@ -67,67 +70,67 @@ body.go { background: #0a8f08; }
   100% { transform: scale(1); }
 }
 
-/* ===== TEXT ===== */
 #main {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 700;
   margin-top: 10px;
 }
 
 #sub {
-  font-size: 16px;
+  font-size: 15px;
   opacity: 0.9;
   white-space: pre-line;
 }
 
-/* ===== SHARE ===== */
 #shareBtn {
   display: none;
-  padding: 12px 18px;
-  border-radius: 10px;
+  margin-top: 14px;
+  padding: 14px 20px;
+  border-radius: 12px;
   border: none;
-  font-size: 16px;
-  font_toggle: 600;
   background: #fff;
   color: #000;
-  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  width: 90%;
+  max-width: 320px;
 }
 
-/* ===== AD SAFE PLACEHOLDER ===== */
 #ad {
   width: 100%;
   max-width: 360px;
-  height: 90px;
+  min-height: 90px;
   margin-bottom: 10px;
-  background: rgba(0,0,0,0.2);
+  background: rgba(0,0,0,0.25);
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 14px;
-  opacity: 0.7;
+  opacity: 0.8;
 }
 </style>
 </head>
 
-<body class="ready">
-<div class="container" id="game">
+<body>
+<div class="wrapper" id="game">
 
   <img id="character" src="cat-idle.png" class="idle" alt="Reaction Cat" />
 
   <div id="main">Tap to start</div>
-  <div id="sub">To get your exact reaction time, play 3 rounds.</div>
+  <div id="sub">For accurate results, play 3 rounds.</div>
 
-  <button id="shareBtn">Share your score</button>
+  <button id="shareBtn">Share your result 🚀</button>
 
-  <div id="ad">Ad Space</div>
+  <!-- AdSense-safe placement -->
+  <div id="ad">Advertisement</div>
 </div>
 
 <script>
+let state = "idle";
 let startTime = 0;
 let timeout = null;
 let attempts = [];
-let state = "ready";
 
 const main = document.getElementById("main");
 const sub = document.getElementById("sub");
@@ -139,71 +142,66 @@ function setCat(img, cls) {
   character.className = cls;
 }
 
-function getGrade(ms) {
-  if (ms < 180) return { grade: "S", img: "cat-happy.png", text: "Lightning fast ⚡" };
-  if (ms < 230) return { grade: "A", img: "cat-fast.png", text: "Excellent!" };
-  if (ms < 300) return { grade: "B", img: "cat-ready.png", text: "Good reaction" };
-  if (ms < 380) return { grade: "C", img: "cat-idle.png", text: "Average" };
-  return { grade: "D", img: "cat-slow.png", text: "Too slow 😵‍💫" };
-}
-
-function getPercentile(ms) {
-  if (ms < 180) return "Top 1%";
-  if (ms < 220) return "Top 5%";
-  if (ms < 260) return "Top 15%";
-  if (ms < 320) return "Top 35%";
-  return "Below average";
+function grade(ms) {
+  if (ms < 180) return { g: "S", p: 99, img: "cat-happy.png", t: "Lightning fast ⚡" };
+  if (ms < 230) return { g: "A", p: 90, img: "cat-fast.png", t: "Excellent" };
+  if (ms < 300) return { g: "B", p: 70, img: "cat-ready.png", t: "Good" };
+  if (ms < 380) return { g: "C", p: 45, img: "cat-idle.png", t: "Average" };
+  return { g: "D", p: 20, img: "cat-slow.png", t: "Too slow 😵‍💫" };
 }
 
 document.body.addEventListener("click", () => {
-  if (state === "ready") {
+
+  if (state === "idle") {
     state = "waiting";
     main.innerText = "Wait for GREEN…";
     sub.innerText = "";
-    document.body.className = "waiting";
     setCat("cat-ready.png", "waiting");
 
     timeout = setTimeout(() => {
       state = "go";
       startTime = Date.now();
+      document.body.classList.add("go");
       main.innerText = "TAP!";
-      document.body.className = "go";
     }, Math.random() * 2000 + 1000);
+    return;
   }
 
-  else if (state === "waiting") {
+  if (state === "waiting") {
     clearTimeout(timeout);
-    state = "ready";
+    state = "idle";
     main.innerText = "Too soon!";
     sub.innerText = "Tap to try again";
-    document.body.className = "ready";
+    document.body.classList.remove("go");
     setCat("cat-slow.png", "react");
+    return;
   }
 
-  else if (state === "go") {
-    const reaction = Date.now() - startTime;
-    attempts.push(reaction);
+  if (state === "go") {
+    const time = Date.now() - startTime;
+    attempts.push(time);
+    document.body.classList.remove("go");
+    state = "idle";
 
-    const result = getGrade(reaction);
-    setCat(result.img, "react");
-
-    main.innerText = `Reaction: ${reaction} ms`;
-    sub.innerText = `Grade: ${result.grade} — ${result.text}`;
-
-    document.body.className = "ready";
-    state = "ready";
+    const r = grade(time);
+    main.innerText = `${time} ms`;
+    sub.innerText = `Grade ${r.g} — ${r.t}`;
+    setCat(r.img, "react");
 
     if (attempts.length >= 3) {
       const best = Math.min(...attempts);
-      const percentile = getPercentile(best);
+      const bestR = grade(best);
 
-      sub.innerText += `\nBest of 3: ${best} ms\nYou are ${percentile}`;
-      shareBtn.style.display = "inline-block";
+      sub.innerText =
+        `Best of 3: ${best} ms\nGrade ${bestR.g} — Faster than ${bestR.p}%`;
 
+      shareBtn.style.display = "block";
       shareBtn.onclick = () => {
-        navigator.share?.({
-          text: `My reaction time is ${best} ms (${percentile}) ⚡ Try it!`
-        });
+        const text =
+          `🐱 My reaction time is ${best} ms!\nGrade ${bestR.g} — Faster than ${bestR.p}%\nTry it: ${location.href}`;
+        navigator.share
+          ? navigator.share({ text })
+          : alert(text);
       };
 
       attempts = [];
@@ -211,5 +209,19 @@ document.body.addEventListener("click", () => {
   }
 });
 </script>
+
+<!-- Structured Data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Game",
+  "name": "Reaction Time Test",
+  "description": "Test your reaction speed by tapping when the screen turns green.",
+  "applicationCategory": "Game",
+  "operatingSystem": "Web",
+  "url": "https://reaction-time-game-rt.netlify.app/"
+}
+</script>
+
 </body>
 </html>
