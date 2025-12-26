@@ -2,210 +2,214 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Reaction Time Test – How Fast Are You?</title>
-
-<meta name="description" content="Test your reaction speed. Play 3 times for accurate results and see your reaction grade." />
-<meta name="google-adsense-account" content="ca-pub-XXXXXXXXXXXXXXXX">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="Test your reaction speed. Tap when the screen turns green. Play 3 rounds to get your accurate reaction time." />
 
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-
-body {
-  height: 100vh;
-  background: #8b0000;
-  color: white;
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  background: #8b0000;
+  color: #fff;
   text-align: center;
-  transition: background 0.15s ease;
   user-select: none;
 }
 
-#game {
-  padding: 20px;
-  width: 100%;
-  max-width: 480px;
-}
+body.go { background: #0a8f08; }
 
-h1 { font-size: 2rem; margin-bottom: 8px; }
-
-#sub {
-  margin-top: 10px;
-  white-space: pre-line;
-  opacity: 0.9;
-}
-
-button {
-  margin-top: 16px;
-  padding: 12px 18px;
-  font-size: 1rem;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
+.container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
 }
 
 #character {
-  width: 160px;
-  margin: 14px auto;
+  width: 220px;
+  max-width: 60%;
+  margin-top: 20px;
 }
 
-.face {
-  transition: transform 0.15s ease;
+/* ===== CAT ANIMATIONS ===== */
+.idle {
+  animation: breathe 3s ease-in-out infinite;
 }
 
-.bounce {
-  animation: bounce 0.2s ease;
+.waiting {
+  animation: wiggle 0.6s ease-in-out infinite;
 }
 
-.shake {
-  animation: shake 0.25s ease;
+.react {
+  animation: pop 0.35s ease-out;
 }
 
-@keyframes bounce {
-  0% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
-  100% { transform: translateY(0); }
+@keyframes breathe {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
 }
 
-@keyframes shake {
-  0% { transform: translateX(0); }
-  25% { transform: translateX(-6px); }
-  50% { transform: translateX(6px); }
-  75% { transform: translateX(-6px); }
-  100% { transform: translateX(0); }
+@keyframes wiggle {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(-2deg); }
+  50% { transform: rotate(2deg); }
+  75% { transform: rotate(-1deg); }
+  100% { transform: rotate(0deg); }
 }
 
-#ad-container {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  min-height: 60px;
-  background: #111;
+@keyframes pop {
+  0% { transform: scale(0.9); }
+  60% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+/* ===== TEXT ===== */
+#main {
+  font-size: 28px;
+  font-weight: 700;
+  margin-top: 10px;
+}
+
+#sub {
+  font-size: 16px;
+  opacity: 0.9;
+  white-space: pre-line;
+}
+
+/* ===== SHARE ===== */
+#shareBtn {
+  display: none;
+  padding: 12px 18px;
+  border-radius: 10px;
+  border: none;
+  font-size: 16px;
+  font_toggle: 600;
+  background: #fff;
+  color: #000;
+  cursor: pointer;
+}
+
+/* ===== AD SAFE PLACEHOLDER ===== */
+#ad {
+  width: 100%;
+  max-width: 360px;
+  height: 90px;
+  margin-bottom: 10px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.9rem;
-  opacity: 0.85;
+  font-size: 14px;
+  opacity: 0.7;
 }
 </style>
 </head>
 
-<body>
+<body class="ready">
+<div class="container" id="game">
 
-<div id="game">
-  <h1 id="text">Tap when the screen turns GREEN</h1>
+  <img id="character" src="cat-idle.png" class="idle" alt="Reaction Cat" />
 
-  <!-- SVG CARTOON CHARACTER -->
-  <svg id="character" viewBox="0 0 200 200">
-    <circle cx="100" cy="100" r="80" fill="#FFD966"/>
-    <circle id="eyeL" cx="70" cy="80" r="8" fill="#000"/>
-    <circle id="eyeR" cx="130" cy="80" r="8" fill="#000"/>
-    <path id="mouth" d="M70 120 Q100 140 130 120" stroke="#000" stroke-width="5" fill="none"/>
-  </svg>
+  <div id="main">Tap to start</div>
+  <div id="sub">To get your exact reaction time, play 3 rounds.</div>
 
-  <div id="sub">
-    For accurate results,<br>
-    play this test <strong>3 times</strong>.<br><br>
-    Tap anywhere to begin.
-  </div>
+  <button id="shareBtn">Share your score</button>
 
-  <button id="shareBtn" style="display:none;">Share your score</button>
+  <div id="ad">Ad Space</div>
 </div>
 
-<div id="ad-container">Advertisement</div>
-
 <script>
-let state = "idle";
-let startTime, timer;
+let startTime = 0;
+let timeout = null;
 let attempts = [];
-let lastScore = null;
+let state = "ready";
 
-const text = document.getElementById("text");
+const main = document.getElementById("main");
 const sub = document.getElementById("sub");
+const character = document.getElementById("character");
 const shareBtn = document.getElementById("shareBtn");
-const face = document.getElementById("character");
-const mouth = document.getElementById("mouth");
 
-function setMouth(type) {
-  if (type === "smile") mouth.setAttribute("d","M70 120 Q100 140 130 120");
-  if (type === "open") mouth.setAttribute("d","M80 120 Q100 150 120 120");
-  if (type === "flat") mouth.setAttribute("d","M70 130 Q100 130 130 130");
-}
-
-function animate(type) {
-  face.classList.remove("bounce","shake");
-  void face.offsetWidth;
-  face.classList.add(type);
+function setCat(img, cls) {
+  character.src = img;
+  character.className = cls;
 }
 
 function getGrade(ms) {
-  if (ms < 180) return {grade:"Elite ⚡", mood:"smile"};
-  if (ms < 220) return {grade:"Fast 🟢", mood:"smile"};
-  if (ms < 260) return {grade:"Average 🟡", mood:"flat"};
-  return {grade:"Needs Practice 🔴", mood:"flat"};
+  if (ms < 180) return { grade: "S", img: "cat-happy.png", text: "Lightning fast ⚡" };
+  if (ms < 230) return { grade: "A", img: "cat-fast.png", text: "Excellent!" };
+  if (ms < 300) return { grade: "B", img: "cat-ready.png", text: "Good reaction" };
+  if (ms < 380) return { grade: "C", img: "cat-idle.png", text: "Average" };
+  return { grade: "D", img: "cat-slow.png", text: "Too slow 😵‍💫" };
+}
+
+function getPercentile(ms) {
+  if (ms < 180) return "Top 1%";
+  if (ms < 220) return "Top 5%";
+  if (ms < 260) return "Top 15%";
+  if (ms < 320) return "Top 35%";
+  return "Below average";
 }
 
 document.body.addEventListener("click", () => {
-  if (state === "idle") {
+  if (state === "ready") {
     state = "waiting";
-    text.innerText = "Wait for green...";
+    main.innerText = "Wait for GREEN…";
     sub.innerText = "";
-    setMouth("flat");
+    document.body.className = "waiting";
+    setCat("cat-ready.png", "waiting");
 
-    timer = setTimeout(() => {
+    timeout = setTimeout(() => {
       state = "go";
-      startTime = performance.now();
-      document.body.style.background = "green";
-      text.innerText = "TAP!";
-      setMouth("open");
-      animate("bounce");
-    }, Math.random() * 3000 + 1000);
+      startTime = Date.now();
+      main.innerText = "TAP!";
+      document.body.className = "go";
+    }, Math.random() * 2000 + 1000);
+  }
 
-  } else if (state === "waiting") {
-    clearTimeout(timer);
-    state = "idle";
-    text.innerText = "Too soon!";
-    setMouth("flat");
-    animate("shake");
+  else if (state === "waiting") {
+    clearTimeout(timeout);
+    state = "ready";
+    main.innerText = "Too soon!";
+    sub.innerText = "Tap to try again";
+    document.body.className = "ready";
+    setCat("cat-slow.png", "react");
+  }
 
-  } else if (state === "go") {
-    const time = Math.round(performance.now() - startTime);
-    lastScore = time;
-    attempts.push(time);
-    state = "idle";
-    document.body.style.background = "#222";
-    text.innerText = `Your time: ${time} ms`;
+  else if (state === "go") {
+    const reaction = Date.now() - startTime;
+    attempts.push(reaction);
 
-    if (attempts.length < 3) {
-      sub.innerText = `Attempt ${attempts.length} of 3\nTap to continue`;
-      setMouth("smile");
-    } else {
+    const result = getGrade(reaction);
+    setCat(result.img, "react");
+
+    main.innerText = `Reaction: ${reaction} ms`;
+    sub.innerText = `Grade: ${result.grade} — ${result.text}`;
+
+    document.body.className = "ready";
+    state = "ready";
+
+    if (attempts.length >= 3) {
       const best = Math.min(...attempts);
-      const result = getGrade(best);
-      sub.innerText = `Best: ${best} ms\nGrade: ${result.grade}`;
-      setMouth(result.mood);
-      animate("bounce");
-      attempts = [];
+      const percentile = getPercentile(best);
+
+      sub.innerText += `\nBest of 3: ${best} ms\nYou are ${percentile}`;
       shareBtn.style.display = "inline-block";
+
+      shareBtn.onclick = () => {
+        navigator.share?.({
+          text: `My reaction time is ${best} ms (${percentile}) ⚡ Try it!`
+        });
+      };
+
+      attempts = [];
     }
   }
 });
-
-shareBtn.addEventListener("click",(e)=>{
-  e.stopPropagation();
-  const txt = `My reaction time is ${lastScore} ms. Can you beat me?`;
-  if (navigator.share) {
-    navigator.share({title:"Reaction Test",text:txt,url:location.href});
-  } else {
-    navigator.clipboard.writeText(txt+" "+location.href);
-    alert("Link copied!");
-  }
-});
 </script>
-
 </body>
 </html>
